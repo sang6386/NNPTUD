@@ -1,0 +1,174 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Danh sách sản phẩm từ API</title>
+
+  <style>
+    body {
+      font-family: Arial, sans-serif;
+      margin: 20px;
+      background: #f4f6f9;
+      color: #333;
+    }
+
+    h1 {
+      text-align: center;
+      color: #2c3e50;
+    }
+
+    .loading {
+      text-align: center;
+      font-size: 1.2em;
+      color: #7f8c8d;
+      margin: 40px;
+    }
+
+    table {
+      width: 100%;
+      max-width: 1200px;
+      margin: 20px auto;
+      border-collapse: collapse;
+      background: white;
+      box-shadow: 0 4px 15px rgba(0,0,0,0.1);
+      border-radius: 8px;
+      overflow: hidden;
+      display: none;
+    }
+
+    th, td {
+      padding: 12px 15px;
+      text-align: left;
+      border-bottom: 1px solid #ddd;
+      vertical-align: middle;
+    }
+
+    th {
+      background: #3498db;
+      color: white;
+    }
+
+    tr:hover {
+      background: #f1faff;
+    }
+
+    .id-col {
+      width: 60px;
+      text-align: center;
+      font-weight: bold;
+    }
+
+    .price-col {
+      color: #e74c3c;
+      font-weight: bold;
+    }
+
+    .desc-col {
+      max-width: 300px;
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+    }
+
+    .cat-col {
+      color: #27ae60;
+      font-weight: 600;
+    }
+
+    .img-col {
+      width: 80px;
+      text-align: center;
+    }
+
+    .img-col img {
+      width: 50px;
+      height: 50px;
+      object-fit: contain;
+      border-radius: 4px;
+      border: 1px solid #eee;
+      background: #fff;
+    }
+  </style>
+</head>
+
+<body>
+
+  <h1>Danh sách sản phẩm từ API (Dạng bảng)</h1>
+
+  <div class="loading" id="loading">Đang tải dữ liệu...</div>
+
+  <table id="productTable">
+    <thead>
+      <tr>
+        <th class="id-col">ID</th>
+        <th>Title</th>
+        <th>Slug</th>
+        <th>Price</th>
+        <th class="desc-col">Description</th>
+        <th class="cat-col">Category</th>
+        <th class="img-col">Image</th>
+      </tr>
+    </thead>
+    <tbody id="tbody"></tbody>
+  </table>
+
+  <script>
+    const API = "https://api.escuelajs.co/api/v1/products";
+    const loading = document.getElementById("loading");
+    const table = document.getElementById("productTable");
+    const tbody = document.getElementById("tbody");
+
+    const DEFAULT_IMAGE = "https://via.placeholder.com/50?text=No+Image";
+
+    fetch(API)
+      .then(res => {
+        if (!res.ok) throw new Error("API Error: " + res.status);
+        return res.json();
+      })
+      .then(products => {
+        loading.style.display = "none";
+        table.style.display = "table";
+
+        products.forEach(p => {
+          // tạo slug từ title
+          const slug = p.title
+            .toLowerCase()
+            .replace(/[^a-z0-9\s-]/g, "")
+            .trim()
+            .replace(/\s+/g, "-");
+
+          // xử lý ảnh
+          let imgSrc = (p.images && p.images.length > 0) ? p.images[0] : DEFAULT_IMAGE;
+          if (imgSrc.includes("placehold")) imgSrc = DEFAULT_IMAGE;
+
+          const row = `
+            <tr>
+              <td class="id-col">${p.id}</td>
+              <td>${p.title}</td>
+              <td>${slug}</td>
+              <td class="price-col">$${p.price}</td>
+              <td class="desc-col">
+                ${p.description.length > 80 
+                  ? p.description.substring(0, 80) + "..." 
+                  : p.description}
+              </td>
+              <td class="cat-col">${p.category?.name || "Other"}</td>
+              <td class="img-col">
+                <img src="${imgSrc}" alt="${p.title}"
+                     onerror="this.src='${DEFAULT_IMAGE}'">
+              </td>
+            </tr>
+          `;
+
+          tbody.innerHTML += row;
+        });
+      })
+      .catch(err => {
+        loading.innerHTML = "Lỗi tải dữ liệu. Mở F12 để xem chi tiết.";
+        console.error(err);
+      });
+  </script>
+
+</body>
+</html>
